@@ -19,9 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CrawlingApplicationTests {
 
 	@Test
-	@DisplayName("중고나라 크롤링 테스트")
-	void t001() throws Exception {
-
+	void contextLoads() {
 	}
 
 }
