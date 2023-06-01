@@ -31,6 +31,8 @@ public class Search extends BaseEntity {
 
     private String imageLink;
 
+    private String provider;
+
     @OneToMany(mappedBy = "search")
     private List<SearchImage> searchImages = new ArrayList<>();
 
