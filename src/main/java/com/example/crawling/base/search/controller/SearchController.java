@@ -10,6 +10,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/search")
 @RequiredArgsConstructor
@@ -20,11 +22,38 @@ public class SearchController {
     public String joongnaCrawling(Model model) {
         WebDriver driver = setCrawling();
 
-        searchService.searchJoongna(driver);
+        List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
+
+        searchService.searchJoongna(driver, keywords);
 
         driver.quit();
 
         return "list";
+    }
+
+    @GetMapping("/bunjang")
+    public String crawlingBunjang(Model model) {
+        WebDriver driver = setCrawling();
+
+        List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
+
+        searchService.searchBunjang(driver, keywords);
+
+        driver.quit();
+
+        return "list";
+    }
+
+    @GetMapping("/daangn")
+    public String crawlingDaangn(Model model){
+
+        return"list";
+    }
+
+    @GetMapping("/hello")
+    public String crawlingHello(Model model){
+
+        return"list";
     }
 
     public WebDriver setCrawling(){
@@ -38,28 +67,5 @@ public class SearchController {
         WebDriver driver = new ChromeDriver(chromeOptions);
 
         return driver;
-    }
-
-    @GetMapping("/bunjang")
-    public String crawlingBunjang(Model model){
-            WebDriver driver = setCrawling();
-
-            searchService.searchBunjang(driver);
-
-            driver.quit();
-
-        return"list";
-    }
-
-    @GetMapping("/daangn")
-    public String crawlingDaangn(Model model){
-
-        return"list";
-    }
-
-    @GetMapping("/hello")
-    public String crawlingHello(Model model){
-
-        return"list";
     }
 }

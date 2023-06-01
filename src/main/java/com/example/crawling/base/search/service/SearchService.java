@@ -21,25 +21,24 @@ import java.util.List;
 public class SearchService {
     private final SearchRepository searchRepository;
 
-    public void searchBunjang(WebDriver driver) {
+    public void searchBunjang(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
 
-        String keyword = "신발";
+        for (int j = 0; j < keywords.size(); j++) {
+            for (int i = 1; i < 3; i++) {
+                String url = "https://m.bunjang.co.kr/search/products?order=date&page=" + i + "&q=" + keywords.get(j);
+                try {
+                    driver.get(url);
 
-        for (int i = 1; i < 3; i++) {
-            String url = "https://m.bunjang.co.kr/search/products?order=date&page=" + i + "&q=" + keyword;
-            try {
-                driver.get(url);
+                    // 게시글 요소 css Selector
+                    String ElementListCssSelector = "[class=\"sc-kcDeIU WTgwo\"] a";
 
-                // 게시글 요소 css Selector
-                String ElementListCssSelector = "[class=\"sc-kcDeIU WTgwo\"] a";
+                    waitPageLoading(driver, ElementListCssSelector);
 
-                waitPageLoading(driver, ElementListCssSelector);
+                    webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
 
-                webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
-
-                if (!webElementList.isEmpty()) {
-                    for (WebElement webElement : webElementList) {
+                    if (!webElementList.isEmpty()) {
+                        for (WebElement webElement : webElementList) {
                             String siteLink = webElement.getAttribute("href");
 
                             String imgLink = webElement.findElement(By.cssSelector("[class=\"sc-hgHYgh ieNgVs\"] img")).getAttribute("src");
@@ -59,89 +58,92 @@ public class SearchService {
 
                             String date = webElement.findElement(By.cssSelector("div [class=\"sc-jtRlXQ kjBXGS\"] span")).getText();
 
-                        Search search = Search
-                                .builder()
-                                .link(siteLink)
-                                .sellDate(date)
-                                .price(price)
-                                .title(title)
-                                .area(area)
-                                .imageLink(imgLink)
-                                .provider("번개장터")
-                                .build();
+                            Search search = Search
+                                    .builder()
+                                    .link(siteLink)
+                                    .sellDate(date)
+                                    .price(price)
+                                    .title(title)
+                                    .area(area)
+                                    .imageLink(imgLink)
+                                    .provider("번개장터")
+                                    .build();
 
-                        searchRepository.save(search);
+                            searchRepository.save(search);
+                        }
                     }
-                }
 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
 
-    public void searchJoongna(WebDriver driver) {
+    public void searchJoongna(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
 
-        // 4페이지까지 크롤링
-        // 1페이지당 80개, 120페이지까지 해야 1시간씩 됨.
-        for (int i = 1; i < 5; i++) {
-            String url = "https://web.joongna.com/search?page=" + i;
-            try {
-                driver.get(url);
+        // 4페이지까지 크롤링https://web.joongna.com/search/%EC%8B%A0%EB%B0%9C?page=2
+        for (int j = 0; j < keywords.size(); j++) {
+            for (int i = 1; i < 3; i++) {
+                String url = "https://web.joongna.com/search/" + keywords.get(j) + "?page=" + i;
 
-                String ElementListCssSelector = "[class=\"ant-col col css-t7ixlq e312bqk0\"] a";
+                try {
+                    driver.get(url);
 
-                waitPageLoading(driver, ElementListCssSelector);
+                    String ElementListCssSelector = "[class=\"ant-col col css-t7ixlq e312bqk0\"] a";
 
-                // 게시글 사이트 링크 a 태그
-                webElementList = driver.findElements(By.cssSelector("[class=\"ant-col col css-t7ixlq e312bqk0\"] a"));
+                    waitPageLoading(driver, ElementListCssSelector);
 
-                if (!webElementList.isEmpty()) {
-                    for (WebElement webElement : webElementList) {
-                        // 게시글 사이트 링크
-                        String siteLink = webElement.getAttribute("href");
+                    // 게시글 사이트 링크 a 태그
+                    webElementList = driver.findElements(By.cssSelector("[class=\"ant-col col css-t7ixlq e312bqk0\"] a"));
 
-                        // 광고가 아닌 실제 게시글만 필터링
-                        if (!siteLink.startsWith("https://web.joongna")) {
-                            continue;
+                    if (!webElementList.isEmpty()) {
+                        for (WebElement webElement : webElementList) {
+                            // 게시글 사이트 링크
+                            String siteLink = webElement.getAttribute("href");
+
+                            // 광고가 아닌 실제 게시글만 필터링
+                            if (!siteLink.startsWith("https://web.joongna")) {
+                                continue;
+                            }
+
+                            // 게시글이 올라온 시간과 상품 가격, 게시글 제목, 게시글 사진
+                            WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"css-1kiruf2\"]"));
+
+                            // 중고나라는 registInfo가 2개인 경우도 있다. 1개인 경우는 시간만, 2개인 경우는 지역 + 시간
+                            List<WebElement> registInfoList = webElementDetail.findElements(By.cssSelector("[class=\"registInfo\"] span"));
+                            String date;
+                            String area = "";
+
+                            if (registInfoList.size() == 1) {
+                                date = registInfoList.get(0).getText();
+                            } else {
+                                area = registInfoList.get(0).getText();
+                                date = registInfoList.get(1).getText();
+                            }
+
+                            String price = webElementDetail.findElement(By.cssSelector("[class=\"priceTxt\"]")).getText();
+                            String title = webElementDetail.findElement(By.cssSelector("[class=\"css-5uwdmz\"]")).getText();
+                            String imgLink = webElementDetail.findElement(By.cssSelector("[class=\"css-jib2h7\"] img")).getAttribute("src");
+
+                            Search search = Search
+                                    .builder()
+                                    .link(siteLink)
+                                    .sellDate(date)
+                                    .price(price)
+                                    .title(title)
+                                    .area(area)
+                                    .imageLink(imgLink)
+                                    .provider("중고나라")
+                                    .build();
+
+                            searchRepository.save(search);
                         }
-
-                        // 게시글이 올라온 시간과 상품 가격, 게시글 제목, 게시글 사진
-                        WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"css-1kiruf2\"]"));
-
-                        // 중고나라는 registInfo가 2개인 경우도 있다. 1개인 경우는 시간만, 2개인 경우는 지역 + 시간
-                        List<WebElement> registInfoList = webElementDetail.findElements(By.cssSelector("[class=\"registInfo\"] span"));
-                        String date;
-                        String area = "";
-
-                        if (registInfoList.size() == 1) {
-                            date = registInfoList.get(0).getText();
-                        } else {
-                            area = registInfoList.get(0).getText();
-                            date = registInfoList.get(1).getText();
-                        }
-
-                        String price = webElementDetail.findElement(By.cssSelector("[class=\"priceTxt\"]")).getText();
-                        String title = webElementDetail.findElement(By.cssSelector("[class=\"css-5uwdmz\"]")).getText();
-                        String imgLink = webElementDetail.findElement(By.cssSelector("[class=\"css-jib2h7\"] img")).getAttribute("src");
-
-                        Search search = Search
-                                .builder()
-                                .link(siteLink)
-                                .sellDate(date)
-                                .price(price)
-                                .title(title)
-                                .area(area)
-                                .imageLink(imgLink)
-                                .provider("중고나라")
-                                .build();
-
-                        searchRepository.save(search);
                     }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
         }
     }
