@@ -4,6 +4,7 @@ import com.example.crawling.base.search.entity.Search;
 import com.example.crawling.base.search.repository.SearchRepository;
 import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedCondition;
@@ -21,7 +22,62 @@ public class SearchService {
     private final SearchRepository searchRepository;
 
     public void searchBunjang(WebDriver driver) {
+        List<WebElement> webElementList;
 
+        String keyword = "신발";
+
+        for (int i = 1; i < 3; i++) {
+            String url = "https://m.bunjang.co.kr/search/products?order=date&page=" + i + "&q=" + keyword;
+            try {
+                driver.get(url);
+
+                // 게시글 요소 css Selector
+                String ElementListCssSelector = "[class=\"sc-kcDeIU WTgwo\"] a";
+
+                waitPageLoading(driver, ElementListCssSelector);
+
+                webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
+
+                if (!webElementList.isEmpty()) {
+                    for (WebElement webElement : webElementList) {
+                            String siteLink = webElement.getAttribute("href");
+
+                            String imgLink = webElement.findElement(By.cssSelector("[class=\"sc-hgHYgh ieNgVs\"] img")).getAttribute("src");
+
+                            String title = webElement.findElement(By.cssSelector("[class=\"sc-gtfDJT brQSgh\"]")).getText();
+
+                            String area = webElement.findElement(By.cssSelector("[class=\"sc-hzDEsm eaWqIm\"]")).getText();
+
+                            String price;
+
+                            // 가격이 적혀있는 글은 가격을 가져오고, 가격에 연락요망 이라고 해놓은 글은 연락요망을 가져온다.
+                            try {
+                                price = webElement.findElement(By.cssSelector("div [class=\"sc-fOICqy ikGLLE\"]")).getText() + "원";
+                            } catch (NoSuchElementException e) {
+                                price = webElement.findElement(By.cssSelector("[class=\"sc-fOICqy gwMnKn\"]")).getText();
+                            }
+
+                            String date = webElement.findElement(By.cssSelector("div [class=\"sc-jtRlXQ kjBXGS\"] span")).getText();
+
+                        Search search = Search
+                                .builder()
+                                .link(siteLink)
+                                .sellDate(date)
+                                .price(price)
+                                .title(title)
+                                .area(area)
+                                .imageLink(imgLink)
+                                .provider("번개장터")
+                                .build();
+
+                        searchRepository.save(search);
+                    }
+                }
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public void searchJoongna(WebDriver driver) {
@@ -34,15 +90,9 @@ public class SearchService {
             try {
                 driver.get(url);
 
-                ExpectedCondition<Boolean> pageLoadCondition = new ExpectedCondition<Boolean>() {
-                    public Boolean apply(WebDriver driver) {
-                        return driver.findElement(By.cssSelector("[class=\"ant-col col css-t7ixlq e312bqk0\"] a")).isDisplayed();
-                    }
-                };
+                String ElementListCssSelector = "[class=\"ant-col col css-t7ixlq e312bqk0\"] a";
 
-                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
-
-                wait.until(pageLoadCondition);
+                waitPageLoading(driver, ElementListCssSelector);
 
                 // 게시글 사이트 링크 a 태그
                 webElementList = driver.findElements(By.cssSelector("[class=\"ant-col col css-t7ixlq e312bqk0\"] a"));
@@ -94,5 +144,18 @@ public class SearchService {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    // css selector가 나타날 때까지 페이지 로딩 기다리기(3초)
+    private void waitPageLoading(WebDriver driver, String selector) {
+        ExpectedCondition<Boolean> pageLoadCondition = new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver driver) {
+                return driver.findElement(By.cssSelector(selector)).isDisplayed();
+            }
+        };
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+
+        wait.until(pageLoadCondition);
     }
 }
