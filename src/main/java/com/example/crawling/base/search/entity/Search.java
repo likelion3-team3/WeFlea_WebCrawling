@@ -2,15 +2,11 @@ package com.example.crawling.base.search.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -21,19 +17,17 @@ import java.util.List;
 public class Search extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
-    private String title;
+    private String title;           // 게시글 제목
 
-    private String price;
+    private String price;           // 상품 가격
 
-    private String sellDate;
+    private String sellDate;        // 판매 시간  ex) 1분 전, 10초 전, 1시간 전
 
-    private String link;
+    private String link;            // 게시글 링크
 
-    private String imageLink;
+    private String imageLink;       // 게시글 사진 링크
 
-    private String provider;
+    private String provider;        // 어느 거래 사이트인지 ex) 당근마켓, 중고나라, ...
 
-    @OneToMany(mappedBy = "search")
-    private List<SearchImage> searchImages = new ArrayList<>();
-
+    private String area;            // 지역
 }

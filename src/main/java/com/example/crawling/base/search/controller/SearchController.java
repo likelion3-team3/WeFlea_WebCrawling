@@ -1,21 +1,14 @@
 package com.example.crawling.base.search.controller;
 
-
-import com.example.crawling.base.search.entity.Search;
 import com.example.crawling.base.search.service.SearchService;
 import lombok.RequiredArgsConstructor;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Controller
 @RequestMapping("/search")
@@ -27,14 +20,10 @@ public class SearchController {
     public String joongnaCrawling(Model model) {
         WebDriver driver = setCrawling();
 
-        String keyword = "신발";
-
-        searchService.searchJoongna(driver, keyword);
-        //List<Search> searchList = searchService.searchJoongna(driver, keyword);
+        searchService.searchJoongna(driver);
 
         driver.quit();
 
-        //model.addAttribute("search_list", searchList);
         return "list";
     }
 
@@ -51,8 +40,13 @@ public class SearchController {
         return driver;
     }
 
-        @GetMapping("/bunjang")
+    @GetMapping("/bunjang")
     public String crawlingBunjang(Model model){
+            WebDriver driver = setCrawling();
+
+            searchService.searchBunjang(driver);
+
+            driver.quit();
 
         return"list";
     }

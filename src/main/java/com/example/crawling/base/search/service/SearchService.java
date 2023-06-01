@@ -1,15 +1,17 @@
 package com.example.crawling.base.search.service;
 
 import com.example.crawling.base.search.entity.Search;
-import com.example.crawling.base.search.repository.SearchImageRepository;
 import com.example.crawling.base.search.repository.SearchRepository;
 import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -18,19 +20,31 @@ import java.util.List;
 public class SearchService {
     private final SearchRepository searchRepository;
 
-    public void searchJoongna(WebDriver driver, String keyword){
-        //List<Search> searchList = new ArrayList<>();
+    public void searchBunjang(WebDriver driver) {
+
+    }
+
+    public void searchJoongna(WebDriver driver) {
         List<WebElement> webElementList;
 
-        // 5페이지까지 크롤링: 1페이지당 20개
-        for (int i = 1; i < 6; i++) {
-            String url = "https://web.joongna.com/search/" + keyword + "?page=" + i;
+        // 4페이지까지 크롤링
+        // 1페이지당 80개, 120페이지까지 해야 1시간씩 됨.
+        for (int i = 1; i < 5; i++) {
+            String url = "https://web.joongna.com/search?page=" + i;
             try {
                 driver.get(url);
 
-                System.out.println(i + "페이지 시작");
+                ExpectedCondition<Boolean> pageLoadCondition = new ExpectedCondition<Boolean>() {
+                    public Boolean apply(WebDriver driver) {
+                        return driver.findElement(By.cssSelector("[class=\"ant-col col css-t7ixlq e312bqk0\"] a")).isDisplayed();
+                    }
+                };
 
-                // 리스트 요소 한칸(게시글 링크, 사진, 가격, 시간, 제목)
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+
+                wait.until(pageLoadCondition);
+
+                // 게시글 사이트 링크 a 태그
                 webElementList = driver.findElements(By.cssSelector("[class=\"ant-col col css-t7ixlq e312bqk0\"] a"));
 
                 if (!webElementList.isEmpty()) {
@@ -47,12 +61,14 @@ public class SearchService {
                         WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"css-1kiruf2\"]"));
 
                         // 중고나라는 registInfo가 2개인 경우도 있다. 1개인 경우는 시간만, 2개인 경우는 지역 + 시간
-                        List<WebElement> registInfoList= webElementDetail.findElements(By.cssSelector("[class=\"registInfo\"] span"));
-                        String date = "";
+                        List<WebElement> registInfoList = webElementDetail.findElements(By.cssSelector("[class=\"registInfo\"] span"));
+                        String date;
+                        String area = "";
 
-                        if (registInfoList.size() == 1){
+                        if (registInfoList.size() == 1) {
                             date = registInfoList.get(0).getText();
                         } else {
+                            area = registInfoList.get(0).getText();
                             date = registInfoList.get(1).getText();
                         }
 
@@ -66,11 +82,10 @@ public class SearchService {
                                 .sellDate(date)
                                 .price(price)
                                 .title(title)
+                                .area(area)
                                 .imageLink(imgLink)
                                 .provider("중고나라")
                                 .build();
-
-                        //searchList.add(search);
 
                         searchRepository.save(search);
                     }
@@ -79,13 +94,5 @@ public class SearchService {
                 throw new RuntimeException(e);
             }
         }
-        //return searchList;
-    }
-    public static boolean isFirstCharacterDigit(String str) {
-        if (str != null && !str.isEmpty()) {
-            char firstChar = str.charAt(0);
-            return Character.isDigit(firstChar);
-        }
-        return false;
     }
 }
