@@ -44,19 +44,34 @@ public class SearchController {
         return "list";
     }
 
-    @GetMapping("/daangn")
-    public String crawlingDaangn(Model model){
-
-        return"list";
-    }
-
     @GetMapping("/hello")
-    public String crawlingHello(Model model){
+    public String crawlingHello(Model model) {
 
-        return"list";
+        WebDriver driver = setCrawling();
+
+        List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
+
+        searchService.searchHello(driver, keywords);
+
+        driver.quit();
+
+        return "list";
     }
 
-    public WebDriver setCrawling(){
+    @GetMapping("/daangn")
+    public String crawlingDaangn(Model model) {
+        WebDriver driver = setCrawling();
+
+        List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
+
+        searchService.searchDaangn(driver, keywords);
+
+        driver.quit();
+
+        return "list";
+    }
+
+    public WebDriver setCrawling() {
         ChromeOptions chromeOptions = new ChromeOptions();
         chromeOptions.addArguments("--start-maximized");        // 전체 화면으로 실행
         chromeOptions.addArguments("--disable-popup-blocking"); // 팝업 무시

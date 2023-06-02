@@ -21,9 +21,61 @@ import java.util.List;
 public class SearchService {
     private final SearchRepository searchRepository;
 
+    public void searchDaangn(WebDriver driver, List<String> keywords) {
+
+    }
+
+    public void searchHello(WebDriver driver, List<String> keywords) {
+        List<WebElement> webElementList;
+
+        // 1 키워드당 30개씩
+        for (int j = 0; j < keywords.size(); j++) {
+            String url = "https://www.hellomarket.com/search?q=" + keywords.get(j) + "&sort=current";
+            try {
+                driver.get(url);
+
+                String ElementListCssSelector = "[class=\"Item__Wrapper-sc-17ycp52-0 hScXrO\"]";
+
+                waitPageLoading(driver, ElementListCssSelector);
+
+                webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
+
+                if (!webElementList.isEmpty()) {
+                    for (WebElement webElement : webElementList) {
+                        String siteLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a")).getAttribute("href");
+                        String imgLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a img")).getAttribute("src");
+
+                        WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"Item__TextBox-sc-17ycp52-5 ivArQS\"]"));
+
+                        String price = webElementDetail.findElement(By.cssSelector("[class=\"Item__Text-sc-17ycp52-4 fUCHku\"]")).getText();
+                        String title = webElementDetail.findElement(By.cssSelector("[class=\"Item__Text-sc-17ycp52-4 cuyRaw\"]")).getText();
+                        String date = webElementDetail.findElement(By.cssSelector("[class=\"Item__TimeTag-sc-17ycp52-9 fxCGUZ\"]")).getText();
+
+                        Search search = Search
+                                .builder()
+                                .link(siteLink)
+                                .sellDate(date)
+                                .price(price)
+                                .title(title)
+                                .area("")
+                                .imageLink(imgLink)
+                                .provider("헬로마켓")
+                                .build();
+
+                        searchRepository.save(search);
+                    }
+                }
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     public void searchBunjang(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
 
+        // 키워드 1개 1페이지 100개
         for (int j = 0; j < keywords.size(); j++) {
             for (int i = 1; i < 3; i++) {
                 String url = "https://m.bunjang.co.kr/search/products?order=date&page=" + i + "&q=" + keywords.get(j);
@@ -83,7 +135,7 @@ public class SearchService {
     public void searchJoongna(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
 
-        // 4페이지까지 크롤링https://web.joongna.com/search/%EC%8B%A0%EB%B0%9C?page=2
+        // 키워드 1개 1페이지 40개
         for (int j = 0; j < keywords.size(); j++) {
             for (int i = 1; i < 3; i++) {
                 String url = "https://web.joongna.com/search/" + keywords.get(j) + "?page=" + i;
@@ -150,11 +202,7 @@ public class SearchService {
 
     // css selector가 나타날 때까지 페이지 로딩 기다리기(3초)
     private void waitPageLoading(WebDriver driver, String selector) {
-        ExpectedCondition<Boolean> pageLoadCondition = new ExpectedCondition<Boolean>() {
-            public Boolean apply(WebDriver driver) {
-                return driver.findElement(By.cssSelector(selector)).isDisplayed();
-            }
-        };
+        ExpectedCondition<Boolean> pageLoadCondition = driver1 -> driver1.findElement(By.cssSelector(selector)).isDisplayed();
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
 
