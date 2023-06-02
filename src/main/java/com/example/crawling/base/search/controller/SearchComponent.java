@@ -5,70 +5,45 @@ import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Controller
-@RequestMapping("/search")
+@Component
 @RequiredArgsConstructor
-public class SearchController {
+public class SearchComponent {
     private final SearchService searchService;
 
-    @GetMapping("/joongna")
-    public String joongnaCrawling(Model model) {
+    // 매 1시간마다 실행한다.
+    //@Scheduled(cron = "0 0 */1 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 */1 * * *", zone = "Asia/Seoul")
+    public void crawling() {
         WebDriver driver = setCrawling();
-
         List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
 
+        crawlingJoongna(driver, keywords);
+        crawlingBunjang(driver, keywords);
+        crawlingHello(driver, keywords);
+        crawlingDaangn(driver, keywords);
+
+        driver.quit();
+    }
+
+    public void crawlingJoongna(WebDriver driver, List<String> keywords) {
         searchService.searchJoongna(driver, keywords);
-
-        driver.quit();
-
-        return "list";
     }
 
-    @GetMapping("/bunjang")
-    public String crawlingBunjang(Model model) {
-        WebDriver driver = setCrawling();
-
-        List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
-
+    public void crawlingBunjang(WebDriver driver, List<String> keywords) {
         searchService.searchBunjang(driver, keywords);
-
-        driver.quit();
-
-        return "list";
     }
 
-    @GetMapping("/hello")
-    public String crawlingHello(Model model) {
-
-        WebDriver driver = setCrawling();
-
-        List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
-
+    public void crawlingHello(WebDriver driver, List<String> keywords) {
         searchService.searchHello(driver, keywords);
-
-        driver.quit();
-
-        return "list";
     }
 
-    @GetMapping("/daangn")
-    public String crawlingDaangn(Model model) {
-        WebDriver driver = setCrawling();
-
-        List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
-
+    public void crawlingDaangn(WebDriver driver, List<String> keywords) {
         searchService.searchDaangn(driver, keywords);
-
-        driver.quit();
-
-        return "list";
     }
 
     public WebDriver setCrawling() {
@@ -78,6 +53,7 @@ public class SearchController {
         chromeOptions.addArguments("--headless");               // 브라우저 안띄움
         chromeOptions.addArguments("--disable-gpu");            // GPU를 사용하지 않음, Linux에서 headless를 사용하는 경우 필요
         chromeOptions.addArguments("--no-sandbox");             // Sandbox 프로세스를 사용하지 않음, Linux에서 headless를 사용하는 경우 필요
+        chromeOptions.addArguments("--disable-dev-shm-usage");
 
         WebDriver driver = new ChromeDriver(chromeOptions);
 

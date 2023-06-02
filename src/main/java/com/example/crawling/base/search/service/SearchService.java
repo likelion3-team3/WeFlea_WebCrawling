@@ -13,19 +13,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class SearchService {
     private final SearchRepository searchRepository;
 
     public void searchDaangn(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
 
-        // 1키워드당 40개씩 keywords.get(j)
+        // 1키워드당 40개씩
         for (int j = 0; j < keywords.size(); j++) {
             String url = "https://www.daangn.com/search/" + keywords.get(j);
             try {
