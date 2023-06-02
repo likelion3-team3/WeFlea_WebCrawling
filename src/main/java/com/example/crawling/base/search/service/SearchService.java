@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,7 +23,64 @@ public class SearchService {
     private final SearchRepository searchRepository;
 
     public void searchDaangn(WebDriver driver, List<String> keywords) {
+        List<WebElement> webElementList;
 
+        // 1키워드당 40개씩 keywords.get(j)
+        for (int j = 0; j < keywords.size(); j++) {
+            String url = "https://www.daangn.com/search/" + keywords.get(j);
+            try {
+                driver.get(url);
+
+                String elementListCssSelector = "[class=\"flea-market-article-link\"]";
+                String moreBtn = "[onclick=\"moreResult(this, 'flea_market', 'flea-market-wrap');\"]";
+
+                WebElement moreBtnElement = driver.findElement(By.cssSelector(moreBtn));
+
+                while (true) {
+                    moreBtnElement.click();
+                    waitPageLoading(driver, moreBtn);
+                    if (moreBtnElement.getAttribute("data-page").equals("3")) {
+                        break;
+                    }
+                }
+                waitPageLoading(driver, elementListCssSelector);
+                webElementList = driver.findElements(By.cssSelector(elementListCssSelector));
+
+                if (!webElementList.isEmpty()) {
+                    for (WebElement webElement : webElementList) {
+                        String siteLink = webElement.getAttribute("href");
+                        String imgLink = webElement.findElement(By.cssSelector("[class=\"card-photo\"] img")).getAttribute("src");
+
+                        String title = webElement.findElement(By.cssSelector("[class=\"article-title\"]")).getText();
+
+                        String price;
+                        try {
+                            price = webElement.findElement(By.cssSelector("[class=\"article-price \"]")).getText();
+                        } catch (NoSuchElementException e) {
+                            price = webElement.findElement(By.cssSelector("[class=\"article-price blank-price\"]")).getText();
+                        }
+
+                        String area = webElement.findElement(By.cssSelector("[class=\"article-region-name\"]")).getText();
+                        // 게시글 내용
+                        // String content = webElement.findElement(By.cssSelector("[class=\"article-content\"]")).getText();
+
+                        Search search = Search
+                                .builder()
+                                .link(siteLink)
+                                .sellDate("")
+                                .price(price)
+                                .title(title)
+                                .area(area)
+                                .imageLink(imgLink)
+                                .provider("당근마켓")
+                                .build();
+
+                        searchRepository.save(search);
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
     }
 
     public void searchHello(WebDriver driver, List<String> keywords) {
@@ -34,11 +92,11 @@ public class SearchService {
             try {
                 driver.get(url);
 
-                String ElementListCssSelector = "[class=\"Item__Wrapper-sc-17ycp52-0 hScXrO\"]";
+                String elementListCssSelector = "[class=\"Item__Wrapper-sc-17ycp52-0 hScXrO\"]";
 
-                waitPageLoading(driver, ElementListCssSelector);
+                waitPageLoading(driver, elementListCssSelector);
 
-                webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
+                webElementList = driver.findElements(By.cssSelector(elementListCssSelector));
 
                 if (!webElementList.isEmpty()) {
                     for (WebElement webElement : webElementList) {
@@ -67,7 +125,6 @@ public class SearchService {
                 }
 
             } catch (Exception e) {
-                throw new RuntimeException(e);
             }
         }
     }
@@ -83,11 +140,11 @@ public class SearchService {
                     driver.get(url);
 
                     // 게시글 요소 css Selector
-                    String ElementListCssSelector = "[class=\"sc-kcDeIU WTgwo\"] a";
+                    String elementListCssSelector = "[class=\"sc-kcDeIU WTgwo\"] a";
 
-                    waitPageLoading(driver, ElementListCssSelector);
+                    waitPageLoading(driver, elementListCssSelector);
 
-                    webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
+                    webElementList = driver.findElements(By.cssSelector(elementListCssSelector));
 
                     if (!webElementList.isEmpty()) {
                         for (WebElement webElement : webElementList) {
@@ -126,7 +183,6 @@ public class SearchService {
                     }
 
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
                 }
             }
         }
@@ -194,7 +250,6 @@ public class SearchService {
                         }
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
                 }
             }
         }
