@@ -1,6 +1,8 @@
 package com.example.crawling.base.search.service;
 
 import com.example.crawling.base.search.entity.Search;
+import com.example.crawling.base.search.entity.SearchKeyword;
+import com.example.crawling.base.search.repository.SearchKeywordRepository;
 import com.example.crawling.base.search.repository.SearchRepository;
 import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.By;
@@ -13,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,6 +25,40 @@ import java.util.List;
 @Transactional
 public class SearchService {
     private final SearchRepository searchRepository;
+    private final SearchKeywordRepository searchKeywordRepository;
+
+    public void crawlingDaangnKeywords(WebDriver driver){
+        List<WebElement> webElementList;
+        List<SearchKeyword> searchKeywordList = new ArrayList<>();
+
+        try {
+            driver.get("https://www.daangn.com/top_keywords");
+
+            String keywordsList = "#top-keywords-list";
+            waitPageLoading(driver, keywordsList);
+            WebElement keywordsListElement = driver.findElement(By.cssSelector(keywordsList));
+
+            String keywordCssSelector = "[class=\"keyword-text\"]";
+
+            waitPageLoading(driver, keywordCssSelector);
+
+            webElementList = keywordsListElement.findElements(By.cssSelector(keywordCssSelector));
+
+            if(!webElementList.isEmpty()){
+                for (WebElement webElement : webElementList) {
+                    String name = webElement.getText();
+                    SearchKeyword searchKeyword = SearchKeyword.builder().name(name).build();
+                    searchKeywordList.add(searchKeyword);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
+        }
+        if (!searchKeywordList.isEmpty()){
+            searchKeywordRepository.saveAll(searchKeywordList);
+        }
+    }
 
     public void searchDaangn(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
@@ -78,6 +117,8 @@ public class SearchService {
                     }
                 }
             } catch (Exception e) {
+                System.out.println("당근마켓 크롤링 에러");
+                System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
             }
         }
     }
@@ -124,6 +165,8 @@ public class SearchService {
                 }
 
             } catch (Exception e) {
+                System.out.println("헬로마켓 크롤링 에러");
+                System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
             }
         }
     }
@@ -182,6 +225,8 @@ public class SearchService {
                     }
 
                 } catch (Exception e) {
+                    System.out.println("번개장터 크롤링 에러");
+                    System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
                 }
             }
         }
@@ -249,6 +294,8 @@ public class SearchService {
                         }
                     }
                 } catch (Exception e) {
+                    System.out.println("중고나라 크롤링 에러");
+                    System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
                 }
             }
         }

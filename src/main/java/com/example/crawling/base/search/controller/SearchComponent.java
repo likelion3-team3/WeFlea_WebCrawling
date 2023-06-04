@@ -15,9 +15,18 @@ import java.util.List;
 public class SearchComponent {
     private final SearchService searchService;
 
+    @Scheduled(cron = "0 0 10 * * *", zone = "Asia/Seoul")
+    public void crawlingKeywords(){
+        WebDriver driver = setCrawling();
+
+        searchService.crawlingDaangnKeywords(driver);
+
+        driver.quit();
+    }
+
     // 매 1시간마다 실행한다.
     //@Scheduled(cron = "0 0 */1 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 0 */1 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 36 20 * * *", zone = "Asia/Seoul")
     public void crawling() {
         WebDriver driver = setCrawling();
         List<String> keywords = List.of("자전거", "의자", "아이폰", "냉장고", "노트북", "아이패드", "모니터", "스타벅스", "책상", "가방", "에어팟", "신발");
