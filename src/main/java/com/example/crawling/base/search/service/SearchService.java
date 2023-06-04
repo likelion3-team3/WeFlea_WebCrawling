@@ -27,6 +27,11 @@ public class SearchService {
     private final SearchRepository searchRepository;
     private final SearchKeywordRepository searchKeywordRepository;
 
+    public List<SearchKeyword> getKeywords(){
+        List<SearchKeyword> searchKeywords = searchKeywordRepository.findAll();
+        return searchKeywords;
+    }
+
     public void crawlingDaangnKeywords(WebDriver driver){
         List<WebElement> webElementList;
         List<SearchKeyword> searchKeywordList = new ArrayList<>();
@@ -45,6 +50,7 @@ public class SearchService {
             webElementList = keywordsListElement.findElements(By.cssSelector(keywordCssSelector));
 
             if(!webElementList.isEmpty()){
+                searchKeywordRepository.deleteAll();
                 for (WebElement webElement : webElementList) {
                     String name = webElement.getText();
                     SearchKeyword searchKeyword = SearchKeyword.builder().name(name).build();
@@ -55,13 +61,12 @@ public class SearchService {
             e.printStackTrace();
             System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
         }
-        if (!searchKeywordList.isEmpty()){
-            searchKeywordRepository.saveAll(searchKeywordList);
-        }
+        searchKeywordRepository.saveAll(searchKeywordList);
     }
 
     public void searchDaangn(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
+        List<Search> searchList = new ArrayList<>();
 
         // 1키워드당 40개씩
         for (int j = 0; j < keywords.size(); j++) {
@@ -113,18 +118,23 @@ public class SearchService {
                                 .provider("당근마켓")
                                 .build();
 
-                        searchRepository.save(search);
+                        searchList.add(search);
                     }
                 }
+
             } catch (Exception e) {
+                e.printStackTrace();
                 System.out.println("당근마켓 크롤링 에러");
                 System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
             }
         }
+        searchRepository.saveAll(searchList);
     }
 
     public void searchHello(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
+
+        List<Search> searchList = new ArrayList<>();
 
         // 1 키워드당 30개씩
         for (int j = 0; j < keywords.size(); j++) {
@@ -160,20 +170,22 @@ public class SearchService {
                                 .provider("헬로마켓")
                                 .build();
 
-                        searchRepository.save(search);
+                        searchList.add(search);
                     }
                 }
-
             } catch (Exception e) {
+                e.printStackTrace();
                 System.out.println("헬로마켓 크롤링 에러");
                 System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
             }
         }
+        searchRepository.saveAll(searchList);
     }
 
     public void searchBunjang(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
 
+        List<Search> searchList = new ArrayList<>();
         // 키워드 1개 1페이지 100개
         for (int j = 0; j < keywords.size(); j++) {
             for (int i = 1; i < 3; i++) {
@@ -220,20 +232,22 @@ public class SearchService {
                                     .provider("번개장터")
                                     .build();
 
-                            searchRepository.save(search);
+                            searchList.add(search);
                         }
                     }
-
                 } catch (Exception e) {
+                    e.printStackTrace();
                     System.out.println("번개장터 크롤링 에러");
                     System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
                 }
             }
         }
+        searchRepository.saveAll(searchList);
     }
 
     public void searchJoongna(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
+        List<Search> searchList = new ArrayList<>();
 
         // 키워드 1개 1페이지 40개
         for (int j = 0; j < keywords.size(); j++) {
@@ -290,15 +304,18 @@ public class SearchService {
                                     .provider("중고나라")
                                     .build();
 
-                            searchRepository.save(search);
+                            searchList.add(search);
                         }
                     }
+
                 } catch (Exception e) {
+                    e.printStackTrace();
                     System.out.println("중고나라 크롤링 에러");
                     System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
                 }
             }
         }
+        searchRepository.saveAll(searchList);
     }
 
     // css selector가 나타날 때까지 페이지 로딩 기다리기(3초)
