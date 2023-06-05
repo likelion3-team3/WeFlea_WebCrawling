@@ -1,7 +1,6 @@
 package com.example.crawling.base.search.controller;
 
 import com.example.crawling.base.search.entity.SearchKeyword;
-import com.example.crawling.base.search.repository.SearchKeywordRepository;
 import com.example.crawling.base.search.service.SearchService;
 import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.WebDriver;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 public class SearchComponent {
     private final SearchService searchService;
 
-    @Scheduled(cron = "10 03 17 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "30 50 17 * * ?", zone = "Asia/Seoul")
     public void crawlingKeywords(){
         WebDriver driver = setCrawling();
 
@@ -27,9 +26,10 @@ public class SearchComponent {
         driver.quit();
     }
 
-    // 매 1시간마다 실행한다.
+    // 오전 9시부터 오후 9시까지 매 1시간마다 실행한다.
     //@Scheduled(cron = "0 0 */1 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "30 51 16 * * *", zone = "Asia/Seoul")
+    //@Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 51 17 * * ?", zone = "Asia/Seoul")
     public void crawling() {
         WebDriver driver = setCrawling();
 
@@ -62,7 +62,7 @@ public class SearchComponent {
 
     public WebDriver setCrawling() {
         ChromeOptions chromeOptions = new ChromeOptions();
-        //chromeOptions.addArguments("--start-maximized");        // 전체 화면으로 실행
+        //chromeOptions.addArguments("--start-maximized");        // 전체 화면으로 실행 (로컬에서 테스트 환경에서만 사용)
         chromeOptions.addArguments("--disable-popup-blocking"); // 팝업 무시
         chromeOptions.addArguments("--headless");               // 브라우저 안띄움
         chromeOptions.addArguments("--disable-gpu");            // GPU를 사용하지 않음, Linux에서 headless를 사용하는 경우 필요

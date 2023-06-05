@@ -15,14 +15,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+
 public class SearchService {
     private final SearchRepository searchRepository;
     private final SearchKeywordRepository searchKeywordRepository;
@@ -59,7 +58,6 @@ public class SearchService {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
         }
         searchKeywordRepository.saveAll(searchKeywordList);
     }
@@ -92,9 +90,12 @@ public class SearchService {
                 if (!webElementList.isEmpty()) {
                     for (WebElement webElement : webElementList) {
                         String siteLink = webElement.getAttribute("href");
+
                         String imgLink = webElement.findElement(By.cssSelector("[class=\"card-photo\"] img")).getAttribute("src");
 
                         String title = webElement.findElement(By.cssSelector("[class=\"article-title\"]")).getText();
+
+                        String siteProduct = siteLink.substring(32, 41);
 
                         String price;
                         try {
@@ -115,6 +116,7 @@ public class SearchService {
                                 .title(title)
                                 .area(area)
                                 .imageLink(imgLink)
+                                //.siteProduct(siteProduct)
                                 .provider("당근마켓")
                                 .build();
 
@@ -125,7 +127,6 @@ public class SearchService {
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("당근마켓 크롤링 에러");
-                System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
             }
         }
         searchRepository.saveAll(searchList);
@@ -153,11 +154,17 @@ public class SearchService {
                         String siteLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a")).getAttribute("href");
                         String imgLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a img")).getAttribute("src");
 
+                        String siteProduct = siteLink.substring(33, 42);
+
                         WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"Item__TextBox-sc-17ycp52-5 ivArQS\"]"));
 
                         String price = webElementDetail.findElement(By.cssSelector("[class=\"Item__Text-sc-17ycp52-4 fUCHku\"]")).getText();
                         String title = webElementDetail.findElement(By.cssSelector("[class=\"Item__Text-sc-17ycp52-4 cuyRaw\"]")).getText();
                         String date = webElementDetail.findElement(By.cssSelector("[class=\"Item__TimeTag-sc-17ycp52-9 fxCGUZ\"]")).getText();
+
+                        if (date.contains("개월")){
+                            continue;
+                        }
 
                         Search search = Search
                                 .builder()
@@ -166,6 +173,7 @@ public class SearchService {
                                 .price(price)
                                 .title(title)
                                 .area("")
+                                //.siteProduct(siteProduct)
                                 .imageLink(imgLink)
                                 .provider("헬로마켓")
                                 .build();
@@ -174,9 +182,8 @@ public class SearchService {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 System.out.println("헬로마켓 크롤링 에러");
-                System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
+                e.printStackTrace();
             }
         }
         searchRepository.saveAll(searchList);
@@ -204,6 +211,8 @@ public class SearchService {
                         for (WebElement webElement : webElementList) {
                             String siteLink = webElement.getAttribute("href");
 
+                            String siteProduct = siteLink.substring(33, 42);
+
                             String imgLink = webElement.findElement(By.cssSelector("[class=\"sc-hgHYgh ieNgVs\"] img")).getAttribute("src");
 
                             String title = webElement.findElement(By.cssSelector("[class=\"sc-gtfDJT brQSgh\"]")).getText();
@@ -221,6 +230,10 @@ public class SearchService {
 
                             String date = webElement.findElement(By.cssSelector("div [class=\"sc-jtRlXQ kjBXGS\"] span")).getText();
 
+                            if (date.contains("개월")){
+                                continue;
+                            }
+
                             Search search = Search
                                     .builder()
                                     .link(siteLink)
@@ -228,6 +241,7 @@ public class SearchService {
                                     .price(price)
                                     .title(title)
                                     .area(area)
+                                    //.siteProduct(siteProduct)
                                     .imageLink(imgLink)
                                     .provider("번개장터")
                                     .build();
@@ -236,9 +250,8 @@ public class SearchService {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
                     System.out.println("번개장터 크롤링 에러");
-                    System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
+                    e.printStackTrace();
                 }
             }
         }
@@ -274,6 +287,14 @@ public class SearchService {
                                 continue;
                             }
 
+                            String siteProduct = "";
+
+                            if (siteLink.contains("detail")){
+                                siteProduct = siteLink.substring(45);
+                            } else {
+                                siteProduct = siteLink.substring(32);
+                            }
+
                             // 게시글이 올라온 시간과 상품 가격, 게시글 제목, 게시글 사진
                             WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"css-1kiruf2\"]"));
 
@@ -300,6 +321,7 @@ public class SearchService {
                                     .price(price)
                                     .title(title)
                                     .area(area)
+                                    //.siteProduct(siteProduct)
                                     .imageLink(imgLink)
                                     .provider("중고나라")
                                     .build();
@@ -309,9 +331,8 @@ public class SearchService {
                     }
 
                 } catch (Exception e) {
-                    e.printStackTrace();
                     System.out.println("중고나라 크롤링 에러");
-                    System.out.println(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
+                    e.printStackTrace();
                 }
             }
         }
