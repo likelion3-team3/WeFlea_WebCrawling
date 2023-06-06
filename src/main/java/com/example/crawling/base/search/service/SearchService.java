@@ -95,7 +95,7 @@ public class SearchService {
 
                         String title = webElement.findElement(By.cssSelector("[class=\"article-title\"]")).getText();
 
-                        String siteProduct = siteLink.substring(32, 41);
+                        String siteProduct = "DG_" + siteLink.substring(32);
 
                         String price;
                         try {
@@ -116,19 +116,19 @@ public class SearchService {
                                 .title(title)
                                 .area(area)
                                 .imageLink(imgLink)
-                                //.siteProduct(siteProduct)
+                                .siteProduct(siteProduct)
                                 .provider("당근마켓")
                                 .build();
 
                         searchList.add(search);
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("당근마켓 크롤링 에러");
             }
         }
+
         searchRepository.saveAll(searchList);
     }
 
@@ -154,7 +154,7 @@ public class SearchService {
                         String siteLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a")).getAttribute("href");
                         String imgLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a img")).getAttribute("src");
 
-                        String siteProduct = siteLink.substring(33, 42);
+                        String siteProduct = "HM_" + siteLink.substring(33, 42);
 
                         WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"Item__TextBox-sc-17ycp52-5 ivArQS\"]"));
 
@@ -173,7 +173,7 @@ public class SearchService {
                                 .price(price)
                                 .title(title)
                                 .area("")
-                                //.siteProduct(siteProduct)
+                                .siteProduct(siteProduct)
                                 .imageLink(imgLink)
                                 .provider("헬로마켓")
                                 .build();
@@ -211,7 +211,7 @@ public class SearchService {
                         for (WebElement webElement : webElementList) {
                             String siteLink = webElement.getAttribute("href");
 
-                            String siteProduct = siteLink.substring(33, 42);
+                            String siteProduct = "BJ_" + siteLink.substring(33, 42);
 
                             String imgLink = webElement.findElement(By.cssSelector("[class=\"sc-hgHYgh ieNgVs\"] img")).getAttribute("src");
 
@@ -241,7 +241,7 @@ public class SearchService {
                                     .price(price)
                                     .title(title)
                                     .area(area)
-                                    //.siteProduct(siteProduct)
+                                    .siteProduct(siteProduct)
                                     .imageLink(imgLink)
                                     .provider("번개장터")
                                     .build();
@@ -294,6 +294,7 @@ public class SearchService {
                             } else {
                                 siteProduct = siteLink.substring(32);
                             }
+                            siteProduct = "JG_" + siteProduct;
 
                             // 게시글이 올라온 시간과 상품 가격, 게시글 제목, 게시글 사진
                             WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"css-1kiruf2\"]"));
@@ -321,7 +322,7 @@ public class SearchService {
                                     .price(price)
                                     .title(title)
                                     .area(area)
-                                    //.siteProduct(siteProduct)
+                                    .siteProduct(siteProduct)
                                     .imageLink(imgLink)
                                     .provider("중고나라")
                                     .build();

@@ -25,8 +25,7 @@ public class Search extends BaseEntity {
 
     private String link;            // 게시글 링크
 
-    //@Column(unique = true)
-    //private String siteProduct;    // 게시글 유니크
+    private String siteProduct;    // 게시글 나중에 중복 제거할 때 비교할 컬럼
 
     private String imageLink;       // 게시글 사진 링크
 

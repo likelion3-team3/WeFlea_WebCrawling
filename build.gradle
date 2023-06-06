@@ -35,8 +35,6 @@ dependencies {
 	// java-selenium 웹 크롤링 selenium
 	implementation 'org.seleniumhq.selenium:selenium-java:4.9.1'
 
-	// Docker에서 주석 풀어야함
-	// implementation 'org.seleniumhq.selenium:selenium-devtools-v86:4.8.3'
 }
 
 tasks.named('test') {
