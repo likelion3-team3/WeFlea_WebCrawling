@@ -4,6 +4,7 @@ import com.example.crawling.base.search.entity.Search;
 import com.example.crawling.base.search.entity.SearchKeyword;
 import com.example.crawling.base.search.repository.SearchKeywordRepository;
 import com.example.crawling.base.search.repository.SearchRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -26,6 +27,7 @@ import java.util.List;
 public class SearchService {
     private final SearchRepository searchRepository;
     private final SearchKeywordRepository searchKeywordRepository;
+    private EntityManager entityManager;
 
     public void crawlingDaangnKeywords(WebDriver driver) {
         List<WebElement> webElementList;
@@ -382,10 +384,11 @@ public class SearchService {
 
     public synchronized void save(List<Search> searchList) {
         for (Search s : searchList) {
-            try {
-                searchRepository.save(s);
-            } catch (DataIntegrityViolationException e) {
+            Search existData = searchRepository.findBySiteProduct(s.getSiteProduct());
+            if (existData != null) {
+                continue;
             }
+            searchRepository.save(s);
         }
     }
 
