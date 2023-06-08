@@ -7,10 +7,10 @@ spring:
     active: dev
     include: secret
   datasource:
-    driver-class-name: ${custom.prod_database.driver-class-name}
-    url: ${custom.prod_database.url}
-    username: ${custom.prod_database.username}
-    password: ${custom.prod_database.password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${custom.dev_database.url}
+    username: ${custom.dev_database.username}
+    password: ${custom.dev_database.password}
   jpa:
     hibernate:
       ddl-auto: create

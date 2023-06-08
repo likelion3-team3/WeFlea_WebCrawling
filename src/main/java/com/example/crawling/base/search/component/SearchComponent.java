@@ -1,4 +1,4 @@
-package com.example.crawling.base.search.controller;
+package com.example.crawling.base.search.component;
 
 import com.example.crawling.base.search.entity.SearchKeyword;
 import com.example.crawling.base.search.service.SearchService;
@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 public class SearchComponent {
     private final SearchService searchService;
 
-    //@Scheduled(cron = "0 50 8 * * ?", zone = "Asia/Seoul")
     @Scheduled(cron = "0 50 8 * * ?", zone = "Asia/Seoul")
     public void crawlingKeywords(){
         WebDriver driver = setCrawling();
@@ -27,38 +26,36 @@ public class SearchComponent {
         driver.quit();
     }
 
-    // 오전 9시부터 오후 9시까지 매 1시간마다 실행한다.
-    //@Scheduled(cron = "0 0 */1 * * *", zone = "Asia/Seoul")
-    //@Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
     @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
-    public void crawling() {
+    public void crawlingJoongna() {
+        List<String> keywords = getKeywords();
         WebDriver driver = setCrawling();
-
-        List<SearchKeyword> keywordList = searchService.getKeywords();
-        List<String> keywords = keywordList.stream().map(SearchKeyword::getName).collect(Collectors.toList());
-
-        crawlingJoongna(driver, keywords);
-        crawlingHello(driver, keywords);
-        crawlingDaangn(driver, keywords);
-        crawlingBunjang(driver, keywords);
-
+        searchService.searchJoongna(driver, keywords);
         driver.quit();
     }
 
-    public void crawlingJoongna(WebDriver driver, List<String> keywords) {
-        searchService.searchJoongna(driver, keywords);
-    }
-
-    public void crawlingBunjang(WebDriver driver, List<String> keywords) {
+    @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    public void crawlingBunjang() {
+        List<String> keywords = getKeywords();
+        WebDriver driver = setCrawling();
         searchService.searchBunjang(driver, keywords);
+        driver.quit();
     }
 
-    public void crawlingHello(WebDriver driver, List<String> keywords) {
+    @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    public void crawlingHello() {
+        List<String> keywords = getKeywords();
+        WebDriver driver = setCrawling();
         searchService.searchHello(driver, keywords);
+        driver.quit();
     }
 
-    public void crawlingDaangn(WebDriver driver, List<String> keywords) {
+    @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    public void crawlingDaangn() {
+        List<String> keywords = getKeywords();
+        WebDriver driver = setCrawling();
         searchService.searchDaangn(driver, keywords);
+        driver.quit();
     }
 
     public WebDriver setCrawling() {
@@ -72,5 +69,12 @@ public class SearchComponent {
         WebDriver driver = new ChromeDriver(chromeOptions);
 
         return driver;
+    }
+
+    public List<String> getKeywords(){
+        List<SearchKeyword> keywordList = searchService.getKeywords();
+        List<String> keywords = keywordList.stream().map(SearchKeyword::getName).collect(Collectors.toList());
+
+        return keywords;
     }
 }

@@ -11,27 +11,23 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-
 public class SearchService {
     private final SearchRepository searchRepository;
     private final SearchKeywordRepository searchKeywordRepository;
 
-    public List<SearchKeyword> getKeywords(){
-        List<SearchKeyword> searchKeywords = searchKeywordRepository.findAll();
-        return searchKeywords;
-    }
-
-    public void crawlingDaangnKeywords(WebDriver driver){
+    public void crawlingDaangnKeywords(WebDriver driver) {
         List<WebElement> webElementList;
         List<SearchKeyword> searchKeywordList = new ArrayList<>();
 
@@ -48,7 +44,7 @@ public class SearchService {
 
             webElementList = keywordsListElement.findElements(By.cssSelector(keywordCssSelector));
 
-            if(!webElementList.isEmpty()){
+            if (!webElementList.isEmpty()) {
                 searchKeywordRepository.deleteAll();
                 for (WebElement webElement : webElementList) {
                     String name = webElement.getText();
@@ -73,7 +69,7 @@ public class SearchService {
                 driver.get(url);
 
                 String elementListCssSelector = "[class=\"flea-market-article-link\"]";
-                String moreBtn = "[onclick=\"moreResult(this, 'flea_market', 'flea-market-wrap');\"]";
+                String moreBtn = "[class=\"more-btn\"]";
 
                 WebElement moreBtnElement = driver.findElement(By.cssSelector(moreBtn));
 
@@ -95,30 +91,21 @@ public class SearchService {
 
                         String title = webElement.findElement(By.cssSelector("[class=\"article-title\"]")).getText();
 
-                        String siteProduct = "DG_" + siteLink.substring(32);
+                        String siteProduct = siteLink.substring(32);
 
                         String price;
                         try {
+                            // .replace("원", "").replace(",", "").replace("만", "0000");
                             price = webElement.findElement(By.cssSelector("[class=\"article-price \"]")).getText();
                         } catch (NoSuchElementException e) {
-                            price = webElement.findElement(By.cssSelector("[class=\"article-price blank-price\"]")).getText();
+                            price = "-1";
                         }
 
                         String area = webElement.findElement(By.cssSelector("[class=\"article-region-name\"]")).getText();
                         // 게시글 내용
                         // String content = webElement.findElement(By.cssSelector("[class=\"article-content\"]")).getText();
 
-                        Search search = Search
-                                .builder()
-                                .link(siteLink)
-                                .sellDate("")
-                                .price(price)
-                                .title(title)
-                                .area(area)
-                                .imageLink(imgLink)
-                                .siteProduct(siteProduct)
-                                .provider("당근마켓")
-                                .build();
+                        Search search = createSearch(price, area, imgLink, siteLink, "당근마켓", siteProduct, "", title);
 
                         searchList.add(search);
                     }
@@ -129,7 +116,7 @@ public class SearchService {
             }
         }
 
-        searchRepository.saveAll(searchList);
+        save(searchList);
     }
 
     public void searchHello(WebDriver driver, List<String> keywords) {
@@ -154,7 +141,7 @@ public class SearchService {
                         String siteLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a")).getAttribute("href");
                         String imgLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a img")).getAttribute("src");
 
-                        String siteProduct = "HM_" + siteLink.substring(33, 42);
+                        String siteProduct = siteLink.substring(33, 42);
 
                         WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"Item__TextBox-sc-17ycp52-5 ivArQS\"]"));
 
@@ -162,21 +149,13 @@ public class SearchService {
                         String title = webElementDetail.findElement(By.cssSelector("[class=\"Item__Text-sc-17ycp52-4 cuyRaw\"]")).getText();
                         String date = webElementDetail.findElement(By.cssSelector("[class=\"Item__TimeTag-sc-17ycp52-9 fxCGUZ\"]")).getText();
 
-                        if (date.contains("개월")){
+                        if (date.contains("개월")) {
+                            continue;
+                        } else if (date.contains("년")){
                             continue;
                         }
 
-                        Search search = Search
-                                .builder()
-                                .link(siteLink)
-                                .sellDate(date)
-                                .price(price)
-                                .title(title)
-                                .area("")
-                                .siteProduct(siteProduct)
-                                .imageLink(imgLink)
-                                .provider("헬로마켓")
-                                .build();
+                        Search search = createSearch(price, "", imgLink, siteLink, "헬로마켓", siteProduct, date, title);
 
                         searchList.add(search);
                     }
@@ -186,7 +165,7 @@ public class SearchService {
                 e.printStackTrace();
             }
         }
-        searchRepository.saveAll(searchList);
+        save(searchList);
     }
 
     public void searchBunjang(WebDriver driver, List<String> keywords) {
@@ -211,7 +190,7 @@ public class SearchService {
                         for (WebElement webElement : webElementList) {
                             String siteLink = webElement.getAttribute("href");
 
-                            String siteProduct = "BJ_" + siteLink.substring(33, 42);
+                            String siteProduct = siteLink.substring(33, 42);
 
                             String imgLink = webElement.findElement(By.cssSelector("[class=\"sc-hgHYgh ieNgVs\"] img")).getAttribute("src");
 
@@ -223,28 +202,18 @@ public class SearchService {
 
                             // 가격이 적혀있는 글은 가격을 가져오고, 가격에 연락요망 이라고 해놓은 글은 연락요망을 가져온다.
                             try {
-                                price = webElement.findElement(By.cssSelector("div [class=\"sc-fOICqy ikGLLE\"]")).getText() + "원";
+                                price = webElement.findElement(By.cssSelector("div [class=\"sc-fOICqy ikGLLE\"]")).getText();
                             } catch (NoSuchElementException e) {
-                                price = webElement.findElement(By.cssSelector("[class=\"sc-fOICqy gwMnKn\"]")).getText();
+                                price = "-1";
                             }
 
                             String date = webElement.findElement(By.cssSelector("div [class=\"sc-jtRlXQ kjBXGS\"] span")).getText();
 
-                            if (date.contains("개월")){
+                            if (date.contains("개월")) {
                                 continue;
                             }
 
-                            Search search = Search
-                                    .builder()
-                                    .link(siteLink)
-                                    .sellDate(date)
-                                    .price(price)
-                                    .title(title)
-                                    .area(area)
-                                    .siteProduct(siteProduct)
-                                    .imageLink(imgLink)
-                                    .provider("번개장터")
-                                    .build();
+                            Search search = createSearch(price, area, imgLink, siteLink, "번개장터", siteProduct, date, title);
 
                             searchList.add(search);
                         }
@@ -255,27 +224,28 @@ public class SearchService {
                 }
             }
         }
-        searchRepository.saveAll(searchList);
+        save(searchList);
     }
+
 
     public void searchJoongna(WebDriver driver, List<String> keywords) {
         List<WebElement> webElementList;
         List<Search> searchList = new ArrayList<>();
 
-        // 키워드 1개 1페이지 40개
+        // 키워드 1개 1페이지 80개
         for (int j = 0; j < keywords.size(); j++) {
             for (int i = 1; i < 3; i++) {
-                String url = "https://web.joongna.com/search/" + keywords.get(j) + "?page=" + i;
+                String url = "https://web.joongna.com/search/" + keywords.get(j) + "?sort=RECENT_SORT&page=" + i;
 
                 try {
                     driver.get(url);
 
-                    String ElementListCssSelector = "[class=\"ant-col col css-t7ixlq e312bqk0\"] a";
+                    String ElementListCssSelector = "[class=\"group box-border overflow-hidden flex rounded-md cursor-pointer pe-0 pb-2 lg:pb-3 flex-col items-start transition duration-200 ease-in-out transform hover:-translate-y-1 md:hover:-translate-y-1.5 hover:shadow-product bg-white\"]";
 
                     waitPageLoading(driver, ElementListCssSelector);
 
-                    // 게시글 사이트 링크 a 태그
-                    webElementList = driver.findElements(By.cssSelector("[class=\"ant-col col css-t7ixlq e312bqk0\"] a"));
+                    // 게시글
+                    webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
 
                     if (!webElementList.isEmpty()) {
                         for (WebElement webElement : webElementList) {
@@ -289,43 +259,30 @@ public class SearchService {
 
                             String siteProduct = "";
 
-                            if (siteLink.contains("detail")){
+                            if (siteLink.contains("detail")) {
                                 siteProduct = siteLink.substring(45);
                             } else {
                                 siteProduct = siteLink.substring(32);
                             }
-                            siteProduct = "JG_" + siteProduct;
 
-                            // 게시글이 올라온 시간과 상품 가격, 게시글 제목, 게시글 사진
-                            WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"css-1kiruf2\"]"));
+                            String imgLink = webElement.findElement(By.cssSelector("[class=\"relative w-full rounded-md overflow-hidden pt-[100%] mb-3 md:mb-3.5\"] img")).getAttribute("src");
 
-                            // 중고나라는 registInfo가 2개인 경우도 있다. 1개인 경우는 시간만, 2개인 경우는 지역 + 시간
-                            List<WebElement> registInfoList = webElementDetail.findElements(By.cssSelector("[class=\"registInfo\"] span"));
+                            // 게시글이 올라온 시간과 상품 가격, 게시글 제목, 지역
+                            WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"w-full overflow-hidden p-2 md:px-2.5 xl:px-4\"]"));
+
                             String date;
-                            String area = "";
+                            String area;
+                            // 중고나라는 registInfo가 2개, 1번이 지역, 2번이 시간
+                            List<WebElement> registInfoList = webElementDetail.findElements(By.cssSelector("[class=\"text-sm text-gray-400\"]"));
 
-                            if (registInfoList.size() == 1) {
-                                date = registInfoList.get(0).getText();
-                            } else {
-                                area = registInfoList.get(0).getText();
-                                date = registInfoList.get(1).getText();
-                            }
+                            date = registInfoList.get(1).getText();
+                            area = registInfoList.get(0).getText();
 
-                            String price = webElementDetail.findElement(By.cssSelector("[class=\"priceTxt\"]")).getText();
-                            String title = webElementDetail.findElement(By.cssSelector("[class=\"css-5uwdmz\"]")).getText();
-                            String imgLink = webElementDetail.findElement(By.cssSelector("[class=\"css-jib2h7\"] img")).getAttribute("src");
+                            String price = webElementDetail.findElement(By.cssSelector("[class=\"font-semibold space-s-2 mt-0.5 text-heading lg:text-lg lg:mt-1.5\"]")).getText();
+                            String title = webElementDetail.findElement(By.cssSelector("[class=\"line-clamp-2 text-sm md:text-base text-heading\"]")).getText();
 
-                            Search search = Search
-                                    .builder()
-                                    .link(siteLink)
-                                    .sellDate(date)
-                                    .price(price)
-                                    .title(title)
-                                    .area(area)
-                                    .siteProduct(siteProduct)
-                                    .imageLink(imgLink)
-                                    .provider("중고나라")
-                                    .build();
+
+                            Search search = createSearch(price, area, imgLink, siteLink, "중고나라", siteProduct, date, title);
 
                             searchList.add(search);
                         }
@@ -337,7 +294,99 @@ public class SearchService {
                 }
             }
         }
-        searchRepository.saveAll(searchList);
+        save(searchList);
+    }
+
+    public synchronized List<SearchKeyword> getKeywords() {
+        List<SearchKeyword> searchKeywords = searchKeywordRepository.findAll();
+        return searchKeywords;
+    }
+
+    // 데이터를 가공하고 빌드 역할을 하는 메서드
+    public Search createSearch(String price, String area, String imageLink, String link, String provider, String siteProduct, String sellDate, String title) {
+
+
+        LocalDateTime dateTime = LocalDateTime.now();
+        // 판매 시간 가공
+        if (sellDate.contains("초")) {
+            int time = Integer.parseInt(sellDate.substring(0, sellDate.indexOf("초")));
+            dateTime = dateTime.minusSeconds(time);
+        } else if (sellDate.contains("분")) {
+            int time = Integer.parseInt(sellDate.substring(0, sellDate.indexOf("분")));
+            dateTime = dateTime.minusMinutes(time);
+        } else if (sellDate.contains("시간")) {
+            int time = Integer.parseInt(sellDate.substring(0, sellDate.indexOf("시")));
+            dateTime = dateTime.minusHours(time);
+        } else if (sellDate.contains("일")) {
+            int time = Integer.parseInt(sellDate.substring(0, sellDate.indexOf("일")));
+            dateTime = dateTime.minusDays(time);
+        } else if (sellDate.equals("")) {
+            dateTime = null;
+        }
+
+        // siteProduct 가공
+        if (provider.equals("중고나라")) {
+            siteProduct = "JG_" + siteProduct;
+        } else if (provider.equals("당근마켓")) {
+            siteProduct = "DG_" + siteProduct;
+        } else if (provider.equals("번개장터")) {
+            siteProduct = "BJ_" + siteProduct;
+        } else if (provider.equals("헬로마켓")) {
+            siteProduct = "HM_" + siteProduct;
+        }
+
+        // 가격 데이터 가공
+        price = price.replace("원", "").replace(",", "");
+
+        if (price.contains("나눔") || price.contains("요망")) {
+            price = "-1";
+        } else if (price.contains("억")) {
+            List<String> priceName = List.of(price.split(" "));
+            if (priceName.size() == 1) {
+                price = price.replace("억", "00000000");
+            } else if (priceName.size() == 2) {
+                if (price.contains("만")){
+                    price = price.replace("억 ", "");
+                } else {
+                    price = price.replace("억 ", "0000");
+                }
+            } else if (priceName.size() == 3){
+                price = price.replace("억 ", "").replace("만 ", "");
+            }
+        } else if (price.contains("만")) {
+            List<String> priceName = List.of(price.split(" "));
+            if (priceName.size() == 1) {
+                price = price.replace("만", "0000");
+            } else {
+                price = price.replace("만 ", "");
+            }
+        }
+
+        // Search 빌드
+        Search search = Search.builder()
+                .createDate(LocalDateTime.now())
+                .modifyDate(LocalDateTime.now())
+                .link(link)
+                .sellDate(dateTime)
+                .price(Integer.parseInt(price))
+                .title(title)
+                .area(area)
+                .siteProduct(siteProduct)
+                .imageLink(imageLink)
+                .provider(provider)
+                .build();
+
+        return search;
+    }
+
+
+    public synchronized void save(List<Search> searchList) {
+        for (Search s : searchList) {
+            try {
+                searchRepository.save(s);
+            } catch (DataIntegrityViolationException e) {
+            }
+        }
     }
 
     // css selector가 나타날 때까지 페이지 로딩 기다리기(3초)
