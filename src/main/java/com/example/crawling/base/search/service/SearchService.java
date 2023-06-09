@@ -4,15 +4,10 @@ import com.example.crawling.base.search.entity.Search;
 import com.example.crawling.base.search.entity.SearchKeyword;
 import com.example.crawling.base.search.repository.SearchKeywordRepository;
 import com.example.crawling.base.search.repository.SearchRepository;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +22,6 @@ import java.util.List;
 public class SearchService {
     private final SearchRepository searchRepository;
     private final SearchKeywordRepository searchKeywordRepository;
-    private EntityManager entityManager;
 
     public void crawlingDaangnKeywords(WebDriver driver) {
         List<WebElement> webElementList;
@@ -70,11 +64,11 @@ public class SearchService {
             try {
                 driver.get(url);
 
-                String elementListCssSelector = "[class=\"flea-market-article-link\"]";
+                String elementListCssSelector = "[class=\"flea-market-article flat-card\"] a";
                 String moreBtn = "[class=\"more-btn\"]";
 
+                waitPageLoading(driver, moreBtn);
                 WebElement moreBtnElement = driver.findElement(By.cssSelector(moreBtn));
-
                 while (true) {
                     moreBtnElement.click();
                     waitPageLoading(driver, moreBtn);
@@ -107,7 +101,10 @@ public class SearchService {
                         // 게시글 내용
                         // String content = webElement.findElement(By.cssSelector("[class=\"article-content\"]")).getText();
 
-                        Search search = createSearch(price, area, imgLink, siteLink, "당근마켓", siteProduct, "", title);
+                        // sellDate는 해당 게시글 페이지로 이동해서 가져옴
+                        String sellDate = getDaangnSellDate(driver, siteLink);
+
+                        Search search = createSearch(price, area, imgLink, siteLink, "당근마켓", siteProduct, sellDate, title);
 
                         searchList.add(search);
                     }
@@ -153,7 +150,7 @@ public class SearchService {
 
                         if (date.contains("개월")) {
                             continue;
-                        } else if (date.contains("년")){
+                        } else if (date.contains("년")) {
                             continue;
                         }
 
@@ -259,7 +256,7 @@ public class SearchService {
                                 continue;
                             }
 
-                            String siteProduct = "";
+                            String siteProduct;
 
                             if (siteLink.contains("detail")) {
                                 siteProduct = siteLink.substring(45);
@@ -299,14 +296,45 @@ public class SearchService {
         save(searchList);
     }
 
+    public String getDaangnSellDate(WebDriver driver, String siteLink) {
+        String originalHandle = driver.getWindowHandle();
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("window.open('" + siteLink + "', '_blank');");
+
+        // 새로 열린 탭으로 전환
+        for (String handle : driver.getWindowHandles()) {
+            if (!handle.equals(originalHandle)) {
+                driver.switchTo().window(handle);
+                break;
+            }
+        }
+
+        String sellDate1 = "[id=\"article-description\"] p time";
+        waitPageLoading(driver, sellDate1);
+
+        String sellDate = driver.findElement(By.cssSelector(sellDate1)).getText();
+
+        if (sellDate.contains("끌올")) {
+            sellDate = sellDate.replace("끌올", "").trim();
+        }
+
+        driver.close(); // 새 탭 닫기
+        driver.switchTo().window(originalHandle); // 원래 탭으로 전환
+
+        return sellDate;
+    }
+
     public synchronized List<SearchKeyword> getKeywords() {
         List<SearchKeyword> searchKeywords = searchKeywordRepository.findAll();
         return searchKeywords;
     }
 
+    public synchronized void deleteAllKeywords() {
+        searchKeywordRepository.deleteAll();
+    }
+
     // 데이터를 가공하고 빌드 역할을 하는 메서드
     public Search createSearch(String price, String area, String imageLink, String link, String provider, String siteProduct, String sellDate, String title) {
-
 
         LocalDateTime dateTime = LocalDateTime.now();
         // 판매 시간 가공
@@ -340,19 +368,21 @@ public class SearchService {
         // 가격 데이터 가공
         price = price.replace("원", "").replace(",", "");
 
-        if (price.contains("나눔") || price.contains("요망")) {
+        if (price.contains("나눔")) {
             price = "-1";
+        } else if (price.contains("요망")) {
+            price = "0";
         } else if (price.contains("억")) {
             List<String> priceName = List.of(price.split(" "));
             if (priceName.size() == 1) {
                 price = price.replace("억", "00000000");
             } else if (priceName.size() == 2) {
-                if (price.contains("만")){
+                if (price.contains("만")) {
                     price = price.replace("억 ", "");
                 } else {
                     price = price.replace("억 ", "0000");
                 }
-            } else if (priceName.size() == 3){
+            } else if (priceName.size() == 3) {
                 price = price.replace("억 ", "").replace("만 ", "");
             }
         } else if (price.contains("만")) {

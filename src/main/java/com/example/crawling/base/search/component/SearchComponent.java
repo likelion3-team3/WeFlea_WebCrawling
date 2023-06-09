@@ -17,8 +17,10 @@ import java.util.stream.Collectors;
 public class SearchComponent {
     private final SearchService searchService;
 
-    @Scheduled(cron = "0 50 8 * * ?", zone = "Asia/Seoul")
-    public void crawlingKeywords(){
+    @Scheduled(cron = "0 50 08 * * ?", zone = "Asia/Seoul")
+    public void crawlingKeywords() {
+        searchService.deleteAllKeywords();
+
         WebDriver driver = setCrawling();
 
         searchService.crawlingDaangnKeywords(driver);
@@ -71,7 +73,7 @@ public class SearchComponent {
         return driver;
     }
 
-    public List<String> getKeywords(){
+    public List<String> getKeywords() {
         List<SearchKeyword> keywordList = searchService.getKeywords();
         List<String> keywords = keywordList.stream().map(SearchKeyword::getName).collect(Collectors.toList());
 
