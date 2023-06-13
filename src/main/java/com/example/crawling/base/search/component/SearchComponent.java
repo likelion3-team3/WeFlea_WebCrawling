@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class SearchComponent {
     private final SearchService searchService;
 
-    @Scheduled(cron = "0 50 08 * * ?", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 50 8 * * ?", zone = "Asia/Seoul")
     public void crawlingKeywords() {
         searchService.deleteAllKeywords();
 
@@ -28,7 +28,7 @@ public class SearchComponent {
         driver.quit();
     }
 
-    @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 10 9-21/1 * * ?", zone = "Asia/Seoul")
     public void crawlingJoongna() {
         List<String> keywords = getKeywords();
         WebDriver driver = setCrawling();
@@ -36,7 +36,7 @@ public class SearchComponent {
         driver.quit();
     }
 
-    @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 10 9-21/1 * * ?", zone = "Asia/Seoul")
     public void crawlingBunjang() {
         List<String> keywords = getKeywords();
         WebDriver driver = setCrawling();
@@ -44,7 +44,7 @@ public class SearchComponent {
         driver.quit();
     }
 
-    @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 10 9-21/1 * * ?", zone = "Asia/Seoul")
     public void crawlingHello() {
         List<String> keywords = getKeywords();
         WebDriver driver = setCrawling();
@@ -52,11 +52,25 @@ public class SearchComponent {
         driver.quit();
     }
 
-    @Scheduled(cron = "0 0 9-21/1 * * ?", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 10 9-21/1 * * ?", zone = "Asia/Seoul")
     public void crawlingDaangn() {
         List<String> keywords = getKeywords();
         WebDriver driver = setCrawling();
         searchService.searchDaangn(driver, keywords);
+        driver.quit();
+    }
+
+    @Scheduled(cron = "0 */30 * * * ?", zone = "Asia/Seoul")
+    public void crawlingHelloAll(){
+        WebDriver driver = setCrawling();
+        searchService.searchHelloAll(driver);
+        driver.quit();
+    }
+
+    @Scheduled(cron = "0 */30 * * * ?", zone = "Asia/Seoul")
+    public void crawlingJoongnaAll(){
+        WebDriver driver = setCrawling();
+        searchService.searchJoongnaAll(driver);
         driver.quit();
     }
 

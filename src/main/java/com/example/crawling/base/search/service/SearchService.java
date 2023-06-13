@@ -23,6 +23,118 @@ public class SearchService {
     private final SearchRepository searchRepository;
     private final SearchKeywordRepository searchKeywordRepository;
 
+    // 660 19분전
+    public void searchHelloAll(WebDriver driver){
+        List<WebElement> webElementList;
+
+        List<Search> searchList = new ArrayList<>();
+
+        String url = "https://www.hellomarket.com/search?q=&sort=current";
+        try{
+            driver.get(url);
+
+            for (int i = 0; i < 10; i++) {
+                scrollDown(driver);
+                sleep(2000);
+            }
+            sleep(2000);
+
+            String elementListCssSelector = "[class=\"Item__Wrapper-sc-17ycp52-0 hScXrO\"]";
+
+            waitPageLoading(driver, elementListCssSelector);
+
+            webElementList = driver.findElements(By.cssSelector(elementListCssSelector));
+
+            if (!webElementList.isEmpty()) {
+                for (WebElement webElement : webElementList) {
+                    String siteLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a")).getAttribute("href");
+                    String imgLink = webElement.findElement(By.cssSelector("[class=\"Item__ThumbnailBox-sc-17ycp52-1 liZtWH\"] a img")).getAttribute("src");
+
+                    String siteProduct = siteLink.substring(33, 42);
+
+                    WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"Item__TextBox-sc-17ycp52-5 ivArQS\"]"));
+
+                    String price = webElementDetail.findElement(By.cssSelector("[class=\"Item__Text-sc-17ycp52-4 fUCHku\"]")).getText();
+                    String title = webElementDetail.findElement(By.cssSelector("[class=\"Item__Text-sc-17ycp52-4 cuyRaw\"]")).getText();
+                    String date = webElementDetail.findElement(By.cssSelector("[class=\"Item__TimeTag-sc-17ycp52-9 fxCGUZ\"]")).getText();
+
+                    Search search = createSearch(price, "", imgLink, siteLink, "헬로마켓", siteProduct, date, title);
+
+                    searchList.add(search);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("헬로마켓 전체 크롤링 에러");
+        }
+        save(searchList);
+    }
+
+    public void searchJoongnaAll(WebDriver driver){
+        List<WebElement> webElementList;
+
+        List<Search> searchList = new ArrayList<>();
+
+        // 1페이지당 80개 26페이지 = 19분전   2080개
+        for (int i = 1; i < 27 ; i++){
+            String url = "https://web.joongna.com/search?sort=RECENT_SORT&page=" + i;
+            try{
+                driver.get(url);
+
+                String ElementListCssSelector = "[class=\"group box-border overflow-hidden flex rounded-md cursor-pointer pe-0 pb-2 lg:pb-3 flex-col items-start transition duration-200 ease-in-out transform hover:-translate-y-1 md:hover:-translate-y-1.5 hover:shadow-product bg-white\"]";
+
+                waitPageLoading(driver, ElementListCssSelector);
+
+                // 게시글
+                webElementList = driver.findElements(By.cssSelector(ElementListCssSelector));
+
+                if (!webElementList.isEmpty()){
+                    for (WebElement webElement : webElementList){
+                        // 게시글 사이트 링크
+                        String siteLink = webElement.getAttribute("href");
+
+                        // 광고가 아닌 실제 게시글만 필터링
+                        if (!siteLink.startsWith("https://web.joongna")) {
+                            continue;
+                        }
+
+                        String siteProduct;
+
+                        if (siteLink.contains("detail")) {
+                            siteProduct = siteLink.substring(45);
+                        } else {
+                            siteProduct = siteLink.substring(32);
+                        }
+
+                        String imgLink = webElement.findElement(By.cssSelector("[class=\"relative w-full rounded-md overflow-hidden pt-[100%] mb-3 md:mb-3.5\"] img")).getAttribute("src");
+
+                        // 게시글이 올라온 시간과 상품 가격, 게시글 제목, 지역
+                        WebElement webElementDetail = webElement.findElement(By.cssSelector("[class=\"w-full overflow-hidden p-2 md:px-2.5 xl:px-4\"]"));
+
+                        String date;
+                        String area;
+                        // 중고나라는 registInfo가 2개, 1번이 지역, 2번이 시간
+                        List<WebElement> registInfoList = webElementDetail.findElements(By.cssSelector("[class=\"text-sm text-gray-400\"]"));
+
+                        date = registInfoList.get(1).getText();
+                        area = registInfoList.get(0).getText();
+
+                        String price = webElementDetail.findElement(By.cssSelector("[class=\"font-semibold space-s-2 mt-0.5 text-heading lg:text-lg lg:mt-1.5\"]")).getText();
+                        String title = webElementDetail.findElement(By.cssSelector("[class=\"line-clamp-2 text-sm md:text-base text-heading\"]")).getText();
+
+                        Search search = createSearch(price, area, imgLink, siteLink, "중고나라", siteProduct, date, title);
+
+                        searchList.add(search);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("중고나라 전체 크롤링 에러");
+            }
+        }
+        save(searchList);
+    }
+
     public void crawlingDaangnKeywords(WebDriver driver) {
         List<WebElement> webElementList;
         List<SearchKeyword> searchKeywordList = new ArrayList<>();
@@ -429,5 +541,19 @@ public class SearchService {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
 
         wait.until(pageLoadCondition);
+    }
+
+    private static void scrollDown(WebDriver driver){
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+    }
+
+    private static void sleep(long milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
