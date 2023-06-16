@@ -2,15 +2,20 @@ package com.example.crawling.base.search.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLInsert;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Getter
@@ -18,20 +23,34 @@ import java.util.List;
 @NoArgsConstructor
 @SuperBuilder
 @ToString(callSuper = true)
-public class Search extends BaseEntity {
+public class Search {
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    private Long id;
+
+    @CreatedDate
+    private LocalDateTime createDate;
+
+    @LastModifiedDate
+    private LocalDateTime modifyDate;
 
     @Column(columnDefinition = "TEXT")
-    private String title;
+    private String title;           // 게시글 제목
 
-    private String price;
+    private int price;              // 상품 가격
 
-    private String sellDate;
+    private LocalDateTime sellDate; // 판매 시간
 
-    private String link;
+    @Column(length = 1000)
+    private String link;            // 게시글 링크
 
-    private String imageLink;
+    @Column(unique = true)
+    private String siteProduct;     // 게시글 나중에 중복 제거할 때 비교할 컬럼
 
-    @OneToMany(mappedBy = "search")
-    private List<SearchImage> searchImages = new ArrayList<>();
+    @Column(length = 1000)
+    private String imageLink;       // 게시글 사진 링크
 
+    private String provider;        // 어느 거래 사이트인지 ex) 당근마켓, 중고나라, ...
+
+    private String area;            // 지역
 }
